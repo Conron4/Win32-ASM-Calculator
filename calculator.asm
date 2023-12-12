@@ -9,7 +9,7 @@ section .data
     numout: db "Result: %lf", 10, 0  ; Output format string for displaying the result
 
     ; Variables for data storage
-    start: dd 0 ; ;Selection Variable
+    start: dd 0 ; Selection Variable
     cint1: dq 0.0  ; Variable to store the first number for calculation
     cint2: dq 0.0  ; Variable to store the second number for calculation
     retr: dd 0  ; Variable to store the response for another calculation
