@@ -1,11 +1,12 @@
 section .data
     ; Messages displayed to the user
-    startmessage: dw "Enter the mode(+ - / * sqrt): ", 0  ; Prompt for entering the calculation mode
+    startmessage: dw "Enter the mode(+ - / * sqrt sin cos rand): ", 0  ; Prompt for entering the calculation mode
     retcall: dw "Do you want another calculation(Y/N): ", 0  ; Prompt for another calculation
     num1: dw "Enter the first number: ", 0  ; Prompt for the first number
     num2: dw "Enter the second number: ", 0  ; Prompt for the second number
     num0: dw "Enter the number: ", 0  ; Prompt for a number (used in sqrt)
     formatin: db "%lf", 0  ; Format string for input as a double
+    sqrti: db "Result: %u", 10, 0
     numout: db "Result: %lf", 10, 0  ; Output format string for displaying the result
 
     ; Variables for data storage
@@ -15,10 +16,12 @@ section .data
     retr: dd 0  ; Variable to store the response for another calculation
     wordin: dd "%s", 0  ; Format string for input as a string
     clear_command: db "cls", 0  ; Command to clear the console
+    radian_conversion: dq 0.0174533
 
 section .text
    global _main 
-   extern _scanf 
+   extern _scanf
+   extern _ExitProcess 
    extern _printf
    extern _system
 
@@ -57,8 +60,15 @@ _main:
     cmp ebx, '/' 
     je _div 
     cmp ebx, "sqrt"
-    je _sqrt 
-    ret  ; Return if none of the operations match
+    je _sqrt
+    cmp ebx, "sin"
+    je _sin
+    cmp ebx, "cos"
+    je _cos
+    cmp ebx, "rand"
+    je _rand
+    xor ebx,ebx
+    jmp _main
 
 _io:
     ;function to handle input output
@@ -83,6 +93,20 @@ _io:
     movsd xmm1, qword [cint2]
     mov esp, ebp ; restore stack
     pop ebp
+    ret
+_1io:
+    push ebp
+    mov ebp, esp
+    push num0
+    call _printf
+    
+    push cint1
+    push formatin
+    call _scanf
+    mov esp, ebp
+    pop ebp
+    movsd xmm0, qword [cint1]
+    fld qword [cint1]
     ret
 
 _return:
@@ -134,20 +158,35 @@ _div:
     call _return
 
 _sqrt:
-    ;sqrt diffrent because it likes to be
-    add esp, 8
-    push num0 ; push num0 string 
-    call _printf
-
-    add esp, 4
-    push cint1 ; variable adress
-    push formatin ; formatting
-    call _scanf
-    movsd xmm0, qword [cint1] ; mov to xmm0 register
-
+    call _1io
     add esp, 8
     sqrtsd    xmm0, xmm0 ; sqrt an store result in xmm0
     movsd qword [esp], xmm0 ; push to stack
     push numout ; formatting
+    call _printf
+    call _return
+
+_rand: 
+    rdrand eax
+    push eax
+    push sqrti
+    call _printf
+    call _return
+
+_sin:
+    call _1io
+    fmul qword [radian_conversion]
+    fsin
+    fstp qword [esp]
+    push numout
+    call _printf
+    call _return
+
+_cos:
+    call _1io
+    fmul qword [radian_conversion]
+    fcos
+    fstp qword [esp]
+    push numout
     call _printf
     call _return
